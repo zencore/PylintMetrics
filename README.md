@@ -1,2 +1,3 @@
-# PylintMetricsParser
-Parse metrics from pylint output
+# PylintMetrics
+
+Generate and extract pylint metrics.
