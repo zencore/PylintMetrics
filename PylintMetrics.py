@@ -9,7 +9,7 @@ A little script that calculates some pylint metrics.
 
 basic usage:
 
-    python PylintMetrics.py [module names] 
+    python PylintMetrics.py [module names]
 
 metric output to file:
 
@@ -28,11 +28,10 @@ Author: Marc Gouw, 2017
 Licence: GNU GPL 3.0
 """
 
+from __future__ import print_function
 import re
-from pylint import epylint as lint
 import argparse
-
-
+from pylint import epylint as lint
 
 
 class PylintMetrics(object):
@@ -64,20 +63,26 @@ class PylintMetrics(object):
         self._stdout_l = None
         self._stderr_l = None
 
+        # where to store metrics
+        self._raw_metrics = None
+        self._duplication = None
+        self._messages = None
+        self._score = None
+
         # regular expression to parse ascii table rows (first 2 columns only)
         self._row_parser = re.compile(
-                "^\s\|(?P<metric>.*?)\s+\|(?P<value>.*?)\s+\|.*$"
-                )
+            r"^\s\|(?P<metric>.*?)\s+\|(?P<value>.*?)\s+\|.*$"
+        )
 
         # No configuration file "error"
         self._no_config_msg = (
-                "No config file found, using default configuration"
-                )
+            "No config file found, using default configuration"
+        )
 
         # Pyline score message:
         self._score_message = re.compile(
-                " Your code has been rated at (?P<score>[-]?\d+(?:\.\d+))\/10.*"
-                )
+            r" Your code has been rated at (?P<score>[-]?\d+(?:\.\d+))\/10.*"
+        )
 
     def run(self):
         """ Just run everything.
@@ -114,7 +119,7 @@ class PylintMetrics(object):
             data[metric] = value
 
         return data
-    
+
     def _get_parse_score(self):
         """ Parse outout for the final score, and return the value.
 
@@ -126,12 +131,12 @@ class PylintMetrics(object):
 
         line = self._stdout_l[-3]
 
-        m = self._score_message.match(line)
+        match = self._score_message.match(line)
 
-        if not m:
+        if not match:
             raise Exception("Could not parse score from pylint.")
 
-        return float(m.groupdict()['score'])
+        return float(match.groupdict()['score'])
 
     def _parse(self):
         """ Parse output for three metric tables, and store values.
@@ -151,7 +156,7 @@ class PylintMetrics(object):
         data = self._get_parsed_block(ind+6, 4)
         self._messages = data
 
-        self._score = self._get_parse_score() 
+        self._score = self._get_parse_score()
 
     def _check(self):
         """ Make sure it looks like pylint ran corrently. Raise an exception if
@@ -181,7 +186,7 @@ class PylintMetrics(object):
         self._stderr_l = self._stderr.split("\n")
 
     def print_metrics(self):
-        """ Print metrics to screen 
+        """ Print metrics to screen
 
         Args:
             fname (str): filename to print to
@@ -196,9 +201,9 @@ class PylintMetrics(object):
         data.update(self._messages)
         data.update({'score': self._score})
 
-        for k, v in data.items():
+        for key, value in data.items():
 
-            print("{0}: {1}".format(k, v))
+            print("{0}: {1}".format(key, value))
 
     def write_metrics(self, fname):
         """  Print the metrics to a file.
@@ -216,13 +221,13 @@ class PylintMetrics(object):
         data.update(self._messages)
         data.update({'score': self._score})
 
-        o = open(fname, 'w')
+        out = open(fname, 'w')
 
-        for k, v in data.items():
+        for key, value in data.items():
 
-            o.write("{0}\t {1}\n".format(k, v))
+            out.write("{0}\t {1}\n".format(key, value))
 
-        o.close()
+        out.close()
 
     def write_output(self, fname):
         """  Print the pylint output to a file.
@@ -236,53 +241,55 @@ class PylintMetrics(object):
 
         self._check()
 
-        o = open(fname, 'w')
+        out = open(fname, 'w')
 
         for line in self._stdout_l:
 
             if line == " Report":
                 break
-            o.write("{0}\n".format(line))
+            out.write("{0}\n".format(line))
 
-        o.close()
+        out.close()
+
 
 def build_parser():
     """ Build and return the PylintMetrics argparser.
     """
+
     parser = argparse.ArgumentParser(
         description="Pylint Metrics Parser."
     )
 
     # modules argument
     parser.add_argument(
-            "modules",
-            nargs="+",
-            help="modules to analyze",
-            )
+        "modules",
+        nargs="+",
+        help="modules to analyze",
+    )
 
     # conf argument
     parser.add_argument(
-            "-c",
-            "--conf",
-            help="pylint confiruration file",
-            required=False,
-            )
+        "-c",
+        "--conf",
+        help="pylint confiruration file",
+        required=False,
+    )
 
     # outfile argument
     parser.add_argument(
-            "-o",
-            "--outfile",
-            help="output file",
-            required=False,
-            )
+        "-o",
+        "--outfile",
+        help="output file",
+        required=False,
+    )
 
     # outfile argument
     parser.add_argument(
-            "-f",
-            "--file",
-            help="Metrics output file",
-            required=False,
-            )
+        "-f",
+        "--file",
+        help="Metrics output file",
+        required=False,
+    )
 
     return parser
 
